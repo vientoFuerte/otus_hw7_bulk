@@ -40,38 +40,91 @@ std::string generateFilename()
     return filename;
 }
 
+bool outputBlockStart(std::ofstream &file)
+{
+    // Открываем файл для записи в бинарном режиме
+    file.open(generateFilename(), std::ios::binary | std::ios::app);
+    bool res = !file.is_open();
+    if (res)
+    {
+        std::cerr << "Failed to open file." << std::endl;
+    }
+
+    std::cout << "bulk : ";
+    file << "bulk : ";
+
+    return res;
+}
+
+bool outputBlockStop(std::ofstream &file)
+{
+    if (file.is_open())
+    {
+        std::cout << "\n";
+      // Закрываем файл
+      file.close();
+    }
+    return false;
+}
+
+
+void blockOutput(std::ofstream &file, std::string cmd, int i, int min, int max)
+{
+    if (file.is_open())
+    {
+      if ((i > min) && (i< (max-1)))
+      {
+          std::cout << ", ";
+          file << ", ";
+      }    
+      std::cout << cmd;
+      file << cmd;
+    }
+}
+
 void cmd_parser(size_t n, const std::vector<std::string> &pool)
 {
     if (n <= 0) return;
+    
+    int depth = 0;       // глубина вложенности скобок - динамических блоков
+    bool blockOutputStarted = false;
+    std::ofstream file;  // Объявление без инициализации
 
     for (size_t currCmd = 0; currCmd < pool.size(); currCmd += n)
     {
-        // Открываем файл для записи в бинарном режиме
-        std::ofstream file(generateFilename(), std::ios::binary | std::ios::app);
-        if (!file.is_open())
-        {
-            std::cerr << "Failed to open file." << std::endl;
-            continue;
+        if(!blockOutputStarted) {
+            blockOutputStarted = outputBlockStart(file);
         }
-
-        std::cout << "bulk :" << "\t";
-        file << "bulk :" << "\t";
+        
         // Определяем конец текущего блока
         size_t end = std::min(currCmd + n, pool.size());
         
         for (size_t i = currCmd; i < end; i++)
         {
-            std::cout << pool[i];
-            file << pool[i];
-            if (i< (end-1))
+            if (pool[i] == "{")  // начался динамический блок
             {
-                std::cout << ", ";
-                file << ", ";
-            }          
+               if(depth==0)  // для первого мы создаем новый файл, для вложенных игнорируем.
+               {
+                  blockOutputStarted = outputBlockStop(file);
+                  
+                  blockOutputStarted = outputBlockStart(file);
+                  
+                }
+              depth++;
+              continue;       
+            }
+            else if (pool[i] == "}") // закончился динамический блок
+            {
+                if(depth == 0){blockOutputStarted = outputBlockStop(file);}
+                depth--;
+                
+                continue;
+            }
+            
+            blockOutput(file, pool[i], i, currCmd, currCmd + n);
+         
         }
-        std::cout << "\n";
-        // Закрываем файл
-        file.close();
+        if(depth == 0) { blockOutputStarted = outputBlockStop(file);}
     
     }
 }
