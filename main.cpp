@@ -31,9 +31,25 @@ int main(int argc, char* argv[])
     N = 3;
     cmd_pool.push_back("cmd1");
     cmd_pool.push_back("cmd2");
+    cmd_pool.push_back("{");
     cmd_pool.push_back("cmd3");
     cmd_pool.push_back("cmd4");
+    cmd_pool.push_back("}");
+    
+    cmd_pool.push_back("{");
     cmd_pool.push_back("cmd5");
+    cmd_pool.push_back("cmd6");
+    cmd_pool.push_back("{");
+    cmd_pool.push_back("cmd7");
+    cmd_pool.push_back("cmd8");
+    cmd_pool.push_back("}");
+    cmd_pool.push_back("cmd9");
+    
+    cmd_pool.push_back("{");
+    
+    cmd_pool.push_back("cmd10");
+    cmd_pool.push_back("cmd11");
+
 
     /* Обрабатывать команды из пула по N штук. */
     cmd_parser(N, cmd_pool);
@@ -45,4 +61,3 @@ int main(int argc, char* argv[])
 
  
 }
-
