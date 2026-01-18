@@ -5,6 +5,8 @@
 #include <fstream>
 #include <ctime>
 #include <cstdlib> // для работы с параметрами командной строки
+#include <chrono>
+#include <thread>
 
 
 
@@ -18,6 +20,8 @@ void static_block()
 
 std::string generateFilename()
 {
+    // Задержка чтобы имена файлов гарантированно отличались
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     // Получаем текущее время
     std::time_t now = std::time(nullptr);
     std::tm timeinfo;
@@ -38,8 +42,9 @@ std::string generateFilename()
 
 void cmd_parser(size_t n, const std::vector<std::string> &pool)
 {
-    static size_t currCmd = 0;
-    while (currCmd < pool.size())
+    if (n <= 0) return;
+
+    for (size_t currCmd = 0; currCmd < pool.size(); currCmd += n)
     {
         // Открываем файл для записи в бинарном режиме
         std::ofstream file(generateFilename(), std::ios::binary | std::ios::app);
@@ -51,25 +56,26 @@ void cmd_parser(size_t n, const std::vector<std::string> &pool)
 
         std::cout << "bulk :" << "\t";
         file << "bulk :" << "\t";
-        for (size_t i = currCmd; i < (currCmd + n) && i < pool.size(); ++i)
+        // Определяем конец текущего блока
+        size_t end = std::min(currCmd + n, pool.size());
+        
+        for (size_t i = currCmd; i < end; i++)
         {
-            std::cout << pool[i] << "\t";
-            file << pool[i] << "\t";
-           
+            std::cout << pool[i];
+            file << pool[i];
+            if (i< (end-1))
+            {
+                std::cout << ", ";
+                file << ", ";
+            }          
         }
-
+        std::cout << "\n";
         // Закрываем файл
         file.close();
-
-        currCmd += 3;
-        std::cout << "\n";
-
-
-            
+    
     }
 }
     
-
 
 
 
