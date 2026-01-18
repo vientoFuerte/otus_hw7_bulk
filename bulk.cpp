@@ -40,23 +40,23 @@ std::string generateFilename()
     return filename;
 }
 
-bool outputBlockStart(std::ofstream &file)
-{
+std::string outputBlockStart(std::ofstream &file)
+{ 
+    std::string filename = generateFilename();
     // Открываем файл для записи в бинарном режиме
-    file.open(generateFilename(), std::ios::binary | std::ios::app);
-    bool res = !file.is_open();
-    if (res)
+    file.open(filename, std::ios::binary | std::ios::app);
+    bool res = file.is_open();
+    if (!res)
     {
         std::cerr << "Failed to open file." << std::endl;
     }
-
     std::cout << "bulk : ";
     file << "bulk : ";
 
-    return res;
+    return filename;
 }
 
-bool outputBlockStop(std::ofstream &file)
+void outputBlockStop(std::ofstream &file)
 {
     if (file.is_open())
     {
@@ -64,7 +64,6 @@ bool outputBlockStop(std::ofstream &file)
       // Закрываем файл
       file.close();
     }
-    return false;
 }
 
 
@@ -89,11 +88,12 @@ void cmd_parser(size_t n, const std::vector<std::string> &pool)
     int depth = 0;       // глубина вложенности скобок - динамических блоков
     bool blockOutputStarted = false;
     std::ofstream file;  // Объявление без инициализации
+    std::string current_filename; 
 
     for (size_t currCmd = 0; currCmd < pool.size(); currCmd += n)
     {
         if(!blockOutputStarted) {
-            blockOutputStarted = outputBlockStart(file);
+            current_filename = outputBlockStart(file);
         }
         
         // Определяем конец текущего блока
@@ -105,9 +105,9 @@ void cmd_parser(size_t n, const std::vector<std::string> &pool)
             {
                if(depth==0)  // для первого мы создаем новый файл, для вложенных игнорируем.
                {
-                  blockOutputStarted = outputBlockStop(file);
+                  outputBlockStop(file);
                   
-                  blockOutputStarted = outputBlockStart(file);
+                  current_filename = outputBlockStart(file);
                   
                 }
               depth++;
@@ -115,7 +115,9 @@ void cmd_parser(size_t n, const std::vector<std::string> &pool)
             }
             else if (pool[i] == "}") // закончился динамический блок
             {
-                if(depth == 0){blockOutputStarted = outputBlockStop(file);}
+                if(depth == 1){
+                  outputBlockStop(file);
+                }
                 depth--;
                 
                 continue;
@@ -124,7 +126,9 @@ void cmd_parser(size_t n, const std::vector<std::string> &pool)
             blockOutput(file, pool[i], i, currCmd, currCmd + n);
          
         }
-        if(depth == 0) { blockOutputStarted = outputBlockStop(file);}
+         if(depth == 0 && blockOutputStarted)  {
+              outputBlockStop(file);   
+         }
     
     }
 }
