@@ -9,15 +9,13 @@
 #include <thread>
 
 std::string generateFilename()
-
 {
-
-    // Задержка чтобы имена файлов гарантированно отличались
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Задержка чтобы имена файлов гарантированно отличались - для отладки 
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
     // Получаем текущее время
     std::time_t now = std::time(nullptr);
     std::tm timeinfo;
-    localtime_r(&timeinfo, &now);
+    localtime_r(&now, &timeinfo);
 
     // Формируем имя файла
     std::string filename = "bulk";
@@ -156,4 +154,5 @@ void cmd_parser(size_t n, const std::vector<std::string>& pool)
         }
     }
 }
+
 
