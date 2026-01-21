@@ -20,7 +20,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
     find_package(GTest REQUIRED)
     
     # Тестовый исполняемый файл
-    add_executable(bulk_tests test.cpp)
+    add_executable(bulk_tests test.cpp bulk.cpp)
     
     # Линкуем с системным gtest
     target_link_libraries(bulk_tests PRIVATE GTest::gtest GTest::gtest_main)
