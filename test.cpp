@@ -12,7 +12,7 @@ TEST(BulkTest, SimpleTest) {
       std::stringstream buf1;
       std::cout.rdbuf(buf1.rdbuf());
       std::vector<std::string> commands = {"cmd1", "cmd2", "cmd3"};
-      
+
       cmd_parser(3, commands); 
       EXPECT_EQ(buf1.str(), "bulk : cmd1, cmd2, cmd3\n");
       std::cout.rdbuf(old_buf); 
