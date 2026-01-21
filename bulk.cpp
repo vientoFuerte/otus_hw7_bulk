@@ -8,7 +8,28 @@
 #include <chrono>
 #include <thread>
 
+std::string generateFilename()
 
+{
+
+    // Задержка чтобы имена файлов гарантированно отличались
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Получаем текущее время
+    std::time_t now = std::time(nullptr);
+    std::tm timeinfo;
+    localtime_r(&timeinfo, &now);
+
+    // Формируем имя файла
+    std::string filename = "bulk";
+    filename += std::to_string(timeinfo.tm_mday);
+    filename += std::to_string(timeinfo.tm_mon + 1);
+    filename += std::to_string(timeinfo.tm_year + 1900);
+    filename += std::to_string(timeinfo.tm_hour);
+    filename += std::to_string(timeinfo.tm_min);
+    filename += std::to_string(timeinfo.tm_sec);
+    filename += ".log";
+    return filename;
+}
 
 std::string outputBlockStart(std::ofstream& file)
 {
@@ -135,3 +156,4 @@ void cmd_parser(size_t n, const std::vector<std::string>& pool)
         }
     }
 }
+
