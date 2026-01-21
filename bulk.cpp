@@ -1,4 +1,4 @@
-﻿// bulk.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
+// bulk.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
 //
 #include "bulk.h"
 #include <iostream>
@@ -153,6 +153,20 @@ void cmd_parser(size_t n, const std::vector<std::string>& pool)
             }
         }
     }
+    
+    // Вывод оставшихся команд после обработки всех входных данных
+    if (depth == 0 && !current_block.empty()) {
+        // Только если мы не внутри динамического блока и есть команды
+        if (!blockOutputStarted) {
+            current_filename = outputBlockStart(file);
+            blockOutputStarted = true;
+        }
+        
+        if (blockOutputStarted) {
+            printBlock(current_block, file);
+            outputBlockStop(file);
+            // Не нужно очищать blockOutputStarted, так как функция завершается
+        }
+    }
 }
-
 
