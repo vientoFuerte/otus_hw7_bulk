@@ -11,7 +11,7 @@
 std::string generateFilename()
 {
     // Задержка чтобы имена файлов гарантированно отличались - для отладки 
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
+     std::this_thread::sleep_for(std::chrono::seconds(2));
     // Получаем текущее время
     std::time_t now = std::time(nullptr);
     std::tm timeinfo;
@@ -47,126 +47,122 @@ void outputBlockStop(std::ofstream& file)
 {
     if (file.is_open())
     {
-        std::cout << "\n";
+         std::cout << std::endl; 
+
         // Закрываем файл
         file.close();
     }
 }
 
 
-void blockOutput(std::ofstream& file, std::string cmd, int i, int min, int max)
-{
-    if (file.is_open())
-    {
-        if ((i > min) && (i < (max - 1)))
-        {
+void printCmd(const std::string& currCmd, std::ostream& file, bool &first_command ) {
+
+        if (!first_command) {
             std::cout << ", ";
             file << ", ";
         }
-        std::cout << cmd;
-        file << cmd;
-    }
-}
-
-
-void printBlock(const std::vector<std::string>& block, std::ostream& file) {
-
-    std::cout << "bulk : ";
-    file << "bulk : ";
-
-    for (size_t j = 0; j < block.size(); ++j) {
-        if (j > 0) {
-            std::cout << ", ";
-            file << ", ";
+        else{
+            std::cout << "bulk : ";
+            file << "bulk : ";
+            first_command = false;  // После вывода "bulk : " меняем флаг
         }
-        file << block[j];
-        std::cout << block[j];
-    }
+        
+        file << currCmd;
+        std::cout << currCmd;
 }
 
 
-void cmd_parser(size_t n, const std::vector<std::string>& pool)
+void cmd_parser(size_t n, const std::string& currCmd)
 {
     if (n <= 0) return;
 
-    int depth = 0;       // глубина вложенности скобок - динамических блоков
-    std::ofstream file;  // Объявление без инициализации
-    std::string current_filename;
-    bool blockOutputStarted = false;
-    std::vector<std::string> current_block; // для накопления команд
+    static int depth = 0;       // глубина вложенности скобок - динамических блоков
+    static std::ofstream file;  // Объявление без инициализации
+    static std::string current_filename;
+    static bool blockOutputStarted = false;
+    static std::vector<std::string> current_block; // для накопления команд
+    static bool first_command = true;  // для вывода запятых
 
-    for (size_t i = 0; i < pool.size(); i++)
+    if (currCmd == "{")
     {
-        const std::string& currCmd = pool[i]; // Текущая команда.
-
-        if (currCmd == "{")
+        if (depth == 0)//  Динамический блок начался и файл был открыт
         {
-            if (depth == 0)//  Динамический блок начался и файл был открыт
+            if (!blockOutputStarted)
             {
-                if (!blockOutputStarted)
-                {
-                    current_filename = outputBlockStart(file);
-                    blockOutputStarted = true;
-                }
-                // Завершаем предыдущий обычный блок, если он не пуст
-                if (!current_block.empty() && blockOutputStarted)
-                {
-                    printBlock(current_block, file);
-                    outputBlockStop(file);
-                    current_block.clear();
-                    blockOutputStarted = false;
-                }
+                 current_filename = outputBlockStart(file);
+                 blockOutputStarted = true; 
+                 first_command = true;
             }
-            depth++;
-        }
-        else if (currCmd == "}") // Динамический блок закончился
-        {
-            depth--;  // Считаем что количество открывающих скобок соответствует количеству закрывающих
-            if (depth == 0)  // Завершился текущий динамический блок
-            {
-                if (blockOutputStarted && !current_block.empty())
-                {
-                    printBlock(current_block, file);
-                    outputBlockStop(file);
-                    current_block.clear();
-                    blockOutputStarted = false;
-                }
-            }
-        }
-        else  // Обычная команда
-        {
-            // Добавляем команду в текущий блок
-            current_block.push_back(currCmd);
-
-            if ((depth == 0) && (current_block.size() >= n))
-            {
-                if (!blockOutputStarted)
-                {
-                    current_filename = outputBlockStart(file);
-
-                }
                 
-                printBlock(current_block, file);
+            if (!current_block.empty()) // Завершаем предыдущий обычный блок, если он не пуст
+            {
+                for (const auto& cmd : current_block) {
+                  printCmd(cmd, file, first_command);
+                }
+
+                outputBlockStop(file);
+                current_block.clear();
+                blockOutputStarted = false;
+            }
+        }
+        depth++;
+    }
+    else if (currCmd == "}") // Динамический блок закончился
+    {
+        depth--;  // Считаем что количество открывающих скобок соответствует количеству закрывающих
+        if (depth == 0)  // Завершился текущий динамический блок
+        {
+            if (blockOutputStarted && !current_block.empty())
+            {
+                // Выводим все накопленные команды
+                for (const auto& cmd : current_block){
+                   printCmd(cmd, file, first_command);
+                }
                 outputBlockStop(file);
                 current_block.clear();
                 blockOutputStarted = false;
             }
         }
     }
-    
-    // Вывод оставшихся команд после обработки всех входных данных
-    if (depth == 0 && !current_block.empty()) {
-        // Только если мы не внутри динамического блока и есть команды
-        if (!blockOutputStarted) {
-            current_filename = outputBlockStart(file);
-            blockOutputStarted = true;
-        }
-        
-        if (blockOutputStarted) {
-            printBlock(current_block, file);
+    else  // Обычная команда
+    {
+        // Добавляем команду в текущий блок
+        current_block.push_back(currCmd);
+
+        if ((depth == 0) && (current_block.size() >= n)) // Не в динамическом блоке и накопили достаточно
+        {
+            if (!blockOutputStarted)
+            {
+                current_filename = outputBlockStart(file);
+                blockOutputStarted = true;
+                first_command = true;
+            }
+            
+             // Выводим N команд
+            for (const auto& cmd : current_block)
+            {
+                printCmd(cmd, file, first_command);
+            }
             outputBlockStop(file);
-            // Не нужно очищать blockOutputStarted, так как функция завершается
+            current_block.clear();
+            blockOutputStarted = false;
         }
     }
+
+// Вывод оставшихся команд после обработки всех входных данных
+if (depth == 0 && !current_block.empty()) {
+    // Только если мы не внутри динамического блока и есть команды
+    if (!blockOutputStarted) {
+        current_filename = outputBlockStart(file);
+        blockOutputStarted = true;
+        first_command = true;
+    }
+    
+    for (const auto& cmd : current_block)
+    {
+        printCmd(cmd, file, first_command);
+    }
+    outputBlockStop(file);
+}
 }
 
