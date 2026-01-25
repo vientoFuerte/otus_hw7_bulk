@@ -14,8 +14,9 @@ int main(int argc, char* argv[])
 
     for (std::string line; std::getline(std::cin, line);)
      {
-         cmd_parser(N, cmd); 
+         cmd_parser(N, line); 
      } 
 }
+
 
 
