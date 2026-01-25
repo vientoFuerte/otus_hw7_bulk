@@ -8,7 +8,7 @@
 
 std::string generateFilename()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    //std::this_thread::sleep_for(std::chrono::seconds(2));
     std::time_t now = std::time(nullptr);
     std::tm timeinfo;
     localtime_r(&now, &timeinfo);
@@ -68,7 +68,7 @@ void cmd_parser(size_t n, const std::string& currCmd)
     static std::string current_filename;
     static bool blockOutputStarted = false;
     static std::vector<std::string> current_block;
-    
+      
     if (currCmd == "{")
     {
         if (depth == 0)
@@ -126,6 +126,19 @@ void cmd_parser(size_t n, const std::string& currCmd)
             current_block.clear();
             blockOutputStarted = false;
         }
+    }    
+    else if (currCmd.empty()) { // Если строка пустая - это конец ввода команд
+        if (depth == 0 && !current_block.empty()) {
+            if (!blockOutputStarted) {
+                current_filename = outputBlockStart(file);
+                blockOutputStarted = true;
+            }
+            printBlock(current_block, file);
+            outputBlockStop(file);
+            current_block.clear();
+            blockOutputStarted = false;
+        }
+        return;
     }
 
 }
