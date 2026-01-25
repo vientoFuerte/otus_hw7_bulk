@@ -55,8 +55,9 @@ void outputBlockStop(std::ofstream& file)
 }
 
 
-void printCmd(const std::string& currCmd, std::ostream& file, bool &first_command ) {
+void printCmd(const std::string& currCmd, std::ostream& file, bool first_command ) {
 
+//std::cout << "[DEBUG first=" << first_command << "] ";  
         if (!first_command) {
             std::cout << ", ";
             file << ", ";
@@ -64,7 +65,7 @@ void printCmd(const std::string& currCmd, std::ostream& file, bool &first_comman
         else{
             std::cout << "bulk : ";
             file << "bulk : ";
-            first_command = false;  // После вывода "bulk : " меняем флаг
+            //first_command = false;  // После вывода "bulk : " меняем флаг
         }
         
         file << currCmd;
@@ -81,28 +82,34 @@ void cmd_parser(size_t n, const std::string& currCmd)
     static std::string current_filename;
     static bool blockOutputStarted = false;
     static std::vector<std::string> current_block; // для накопления команд
-    static bool first_command = true;  // для вывода запятых
-
+    //static bool first_command = true;  // для вывода запятых
+    
+        if (currCmd != "{" && currCmd != "}" && current_block.empty()) {
+       // first_command = true;  // Сброс при начале нового блока
+    }
+    
+   // std::cout << "\n[DEBUG] currCmd: " << currCmd << ", current_block size: \n" << current_block.size();
+    
     if (currCmd == "{")
     {
         if (depth == 0)//  Динамический блок начался и файл был открыт
-        {
-            if (!blockOutputStarted)
+        { 
+            if (!current_block.empty()) // Завершаем предыдущий обычный блок, если он не пуст      
             {
-                 current_filename = outputBlockStart(file);
-                 blockOutputStarted = true; 
-                 first_command = true;
-            }
-                
-            if (!current_block.empty()) // Завершаем предыдущий обычный блок, если он не пуст
-            {
-                for (const auto& cmd : current_block) {
-                  printCmd(cmd, file, first_command);
+                //first_command = true;
+                if (!blockOutputStarted)
+                {
+                     current_filename = outputBlockStart(file);
+                     blockOutputStarted = true; 
+                       
+                }
+                for (size_t i = 0; i < current_block.size(); ++i) {
+                    printCmd(current_block[i], file, i == 0);
                 }
 
                 outputBlockStop(file);
                 current_block.clear();
-                blockOutputStarted = false;
+                blockOutputStarted = false;      
             }
         }
         depth++;
@@ -115,11 +122,12 @@ void cmd_parser(size_t n, const std::string& currCmd)
             if (blockOutputStarted && !current_block.empty())
             {
                 // Выводим все накопленные команды
-                for (const auto& cmd : current_block){
-                   printCmd(cmd, file, first_command);
+                for (size_t i = 0; i < current_block.size(); ++i) {
+                   printCmd(current_block[i], file, i == 0);
                 }
                 outputBlockStop(file);
                 current_block.clear();
+               // first_command = true;
                 blockOutputStarted = false;
             }
         }
@@ -135,34 +143,35 @@ void cmd_parser(size_t n, const std::string& currCmd)
             {
                 current_filename = outputBlockStart(file);
                 blockOutputStarted = true;
-                first_command = true;
+                //first_command = true;
             }
             
              // Выводим N команд
-            for (const auto& cmd : current_block)
-            {
-                printCmd(cmd, file, first_command);
+            for (size_t i = 0; i < current_block.size(); ++i) {
+                printCmd(current_block[i], file, i == 0);
             }
             outputBlockStop(file);
             current_block.clear();
             blockOutputStarted = false;
+            
         }
     }
 
-// Вывод оставшихся команд после обработки всех входных данных
-if (depth == 0 && !current_block.empty()) {
-    // Только если мы не внутри динамического блока и есть команды
-    if (!blockOutputStarted) {
-        current_filename = outputBlockStart(file);
-        blockOutputStarted = true;
-        first_command = true;
+    // Вывод оставшихся команд после обработки всех входных данных
+    if (depth == 0 && !current_block.empty()) {
+        // Только если мы не внутри динамического блока и есть команды
+        if (!blockOutputStarted) {
+            current_filename = outputBlockStart(file);
+            blockOutputStarted = true;
+            //first_command = true;
+        }
+        
+            for (size_t i = 0; i < current_block.size(); ++i) {
+                printCmd(current_block[i], file, i == 0);
+            }
+        outputBlockStop(file);
+        current_block.clear();
+        //first_command = true;
     }
-    
-    for (const auto& cmd : current_block)
-    {
-        printCmd(cmd, file, first_command);
-    }
-    outputBlockStop(file);
-}
 }
 
