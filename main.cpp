@@ -14,10 +14,8 @@ int main(int argc, char* argv[])
 
     for (std::string line; std::getline(std::cin, line);)
      {
-         cmd_pool.push_back(line);
-     }
-
-    /* Обрабатывать команды из пула по N штук. */
-    cmd_parser(N, cmd_pool);  
+         cmd_parser(N, cmd); 
+     } 
 }
+
 
