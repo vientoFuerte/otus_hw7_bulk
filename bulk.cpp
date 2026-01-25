@@ -39,24 +39,24 @@ void outputBlockStop(std::ofstream& file)
 {
     if (file.is_open())
     {
-        std::cout << std::endl;
+        std::cout << "\n";
         file.close();
     }
 }
 
-void printCmd(const std::string& currCmd, std::ostream& file, bool first_command)
-{
-    if (!first_command) {
-        std::cout << ", ";
-        file << ", ";
-    }
-    else{
-        std::cout << "bulk: ";
-        file << "bulk: ";
-    }
+
+void printBlock(const std::vector<std::string>& block, std::ostream& file) {
+    std::cout << "bulk : ";
+    file << "bulk : ";
     
-    file << currCmd;
-    std::cout << currCmd;
+    for (size_t i = 0; i < block.size(); ++i) {
+        if (i > 0) {
+            std::cout << ", ";
+            file << ", ";
+        }
+        std::cout << block[i];
+        file << block[i];
+    }
 }
 
 void cmd_parser(size_t n, const std::string& currCmd)
@@ -80,10 +80,7 @@ void cmd_parser(size_t n, const std::string& currCmd)
                      current_filename = outputBlockStart(file);
                      blockOutputStarted = true;
                 }
-                for (size_t i = 0; i < current_block.size(); ++i) {
-                    printCmd(current_block[i], file, i == 0);
-                }
-
+                printBlock(current_block, file);
                 outputBlockStop(file);
                 current_block.clear();
                 blockOutputStarted = false;
@@ -104,9 +101,7 @@ void cmd_parser(size_t n, const std::string& currCmd)
                         current_filename = outputBlockStart(file);
                         blockOutputStarted = true;
                     }
-                    for (size_t i = 0; i < current_block.size(); ++i) {
-                       printCmd(current_block[i], file, i == 0);
-                    }
+                    printBlock(current_block, file);   
                     outputBlockStop(file);
                     current_block.clear();
                     blockOutputStarted = false;
@@ -126,26 +121,11 @@ void cmd_parser(size_t n, const std::string& currCmd)
                 blockOutputStarted = true;
             }
             
-            for (size_t i = 0; i < current_block.size(); ++i) {
-                printCmd(current_block[i], file, i == 0);
-            }
+            printBlock(current_block, file);
             outputBlockStop(file);
             current_block.clear();
             blockOutputStarted = false;
         }
     }
 
-    if (depth == 0 && !current_block.empty()) {
-        if (!blockOutputStarted) {
-            current_filename = outputBlockStart(file);
-            blockOutputStarted = true;
-        }
-        
-        for (size_t i = 0; i < current_block.size(); ++i) {
-            printCmd(current_block[i], file, i == 0);
-        }
-        outputBlockStop(file);
-        current_block.clear();
-        blockOutputStarted = false;
-    }
 }
