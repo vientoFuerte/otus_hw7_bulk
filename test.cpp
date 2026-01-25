@@ -13,11 +13,11 @@ TEST(BulkTest, SimpleTest) {
       std::cout.rdbuf(buf1.rdbuf());
       std::vector<std::string> commands = {"cmd1", "cmd2", "cmd3"};
 
-for (const auto& cmd : commands) {
-  cmd_parser(3, cmd); 
-
-}
-      //cmd_parser(3, commands); 
+      for (const auto& cmd : commands) {
+        cmd_parser(3, cmd); 
+      }
+      cmd_parser(3, ""); // пустая строка - явный вызов EOF
+      
       EXPECT_EQ(buf1.str(), "bulk : cmd1, cmd2, cmd3\n");
       std::cout.rdbuf(old_buf); 
     }
@@ -29,11 +29,11 @@ for (const auto& cmd : commands) {
       std::cout.rdbuf(buf2.rdbuf());
       std::vector<std::string> commands2 = {"cmd1", "cmd2", "cmd3", "cmd4", "cmd5"};
       
-      //cmd_parser(3, commands2); 
-        for (const auto& cmd : commands2) {
-        //cmd_pool.push_back(cmd);  
+      for (const auto& cmd : commands2) {
         cmd_parser(3, cmd); 
       }
+      cmd_parser(3, "");
+      
       EXPECT_EQ(buf2.str(), "bulk : cmd1, cmd2, cmd3\nbulk : cmd4, cmd5\n");
 
       // Восстанавливаем буфер
@@ -59,6 +59,7 @@ TEST(BulkTest, DynamicBlock) {
     for (const auto& cmd : commands){
       cmd_parser(3, cmd); 
     }
+    cmd_parser(3, "");
     
     EXPECT_EQ(buf1.str(), "bulk : cmd1, cmd2\nbulk : cmd3, cmd4, cmd5\n");
  
